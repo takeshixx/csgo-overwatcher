@@ -11,6 +11,7 @@ RE_URL = re.compile(r'GET (/730/\d+_\d+.dem.bz2)')
 RE_HOST = re.compile(r'Host: (replay\d+.valve.net)')
 RE_FILENAME = re.compile(r'GET /730/(\d+_\d+.dem.bz2)')
 RE_STEAMID = re.compile(r'STEAM_\d:\d:\d+')
+RE_DEMO_MSG = re.compile(rb'(?:^|(?:\r)?\n)(\w+|(?:\w+\s+\w+))(?:\r)?\n{(?:\r)?\n (.*?)?(?:\r)?\n}', re.S | re.M)
 TEAM_T = 2
 TEAM_CT = 3
 DEMOINFOGO = 'demoinfogo.exe'
@@ -171,8 +172,7 @@ class DemoInfo(object):
         
     def parse_demo_dump(self, dump):
         info('Parsing demo messages...')
-        re_msg = re.compile(rb'(?:^|(?:\r)?\n)(\w+|(?:\w+\s+\w+))(?:\r)?\n{(?:\r)?\n (.*?)?(?:\r)?\n}', re.S | re.M)
-        found_messages = re_msg.findall(dump)
+        found_messages = RE_DEMO_MSG.findall(dump)
         for msg in found_messages:
             message_type = msg[0].replace(b' ', b'_')
             message_data = msg[1]
