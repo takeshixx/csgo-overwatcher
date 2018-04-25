@@ -290,7 +290,7 @@ class DemoInfo(object):
             
     def print_stats(self, data):
         header = '-- Player Stats - Round {total_rounds} - {current_winner}\'s won --'.format(
-            total_rounds=self.current_round + 1,
+            total_rounds=self.current_round,
             current_winner='CT' if data[b'winner'] == b'3' else 'T')
         print(header)
         padding = max(len(p.name) for _, p in self.players.items()) + 2
