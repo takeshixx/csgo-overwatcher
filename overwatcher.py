@@ -5,6 +5,8 @@ import re
 import bz2
 import requests
 import subprocess
+import json
+import time
 from scapy.all import *
 
 RE_URL = re.compile(r'GET (/730/\d+_\d+.dem.bz2)')
@@ -12,9 +14,11 @@ RE_HOST = re.compile(r'Host: (replay\d+.valve.net)')
 RE_FILENAME = re.compile(r'GET /730/(\d+_\d+.dem.bz2)')
 RE_STEAMID = re.compile(r'STEAM_\d:\d:\d+')
 RE_DEMO_MSG = re.compile(rb'(?:^|(?:\r)?\n)(\w+|(?:\w+\s+\w+))(?:\r)?\n{(?:\r)?\n (.*?)?(?:\r)?\n}', re.S | re.M)
+RE_PROFILE_BAN = re.compile(rb'<div class="profile_ban_status">[\r\n\t]+<div class="profile_ban">[\r\n\t]+\d+ game ban on record[\r\n\t]+', re.S | re.M)
 TEAM_T = 2
 TEAM_CT = 3
 DEMOINFOGO = 'demoinfogo.exe'
+SUSPECTS_FILE = 'suspects.json'
 
 
 def info(msg):
@@ -67,6 +71,103 @@ def find_demo(pkt):
         info('Found new demo: {}'.format(url))
         filename = RE_FILENAME.findall(p)[0]
         download_demo(url, filename)
+        
+def handle_suspect(players, demofile):
+    info('Who is the suspect?')
+    print('0\tSuspect is innocent (lol)')
+    print('---')
+    if isinstance(players, dict):
+        players = list(players.values())
+    for i, player in enumerate(players):
+        print('{id}\t{name} ({kills}/{assists}/{deaths})'.format(
+                id=i + 1,
+                name=player.name.decode(),
+                kills=player.kills,
+                assists=player.assists,
+                deaths=player.deaths))
+    tries = 0
+    choice = None
+    while tries < 3:
+        try:
+            choice = input('Please provide the number: ')
+        except KeyboardInterrupt:
+            break
+        try:
+            choice = int(choice)
+            break
+        except ValueError:
+            warn('Invalid player choice: ' + str(choice))
+    if not choice and choice != 0:
+        warn('Failed to provide a valid suspect id!')
+        return
+    write_suspects_file(players[choice - 1], demofile)
+
+
+def write_suspects_file(player, demofile):
+    assert isinstance(player, Player), 'Invalid Player object: ' + str(type(player))
+    info('Checking VAC status for ' + player.xuid.decode())
+    banned = check_vac_status(player.xuid.decode())
+    info('VAC status: ' + 'BANNED' if banned else 'not banned (yet)')
+    suspect = {'xuid': player.xuid.decode(),
+               'name': player.name.decode(),
+               'stats': '{}/{}/{}'.format(player.kills, player.assists, player.deaths),
+               'banned': banned,
+               'added': int(time.time()),
+               'last_checked': int(time.time()),
+               'demo': os.path.basename(demofile)}
+    data_json = []
+    if os.path.isfile(SUSPECTS_FILE) and \
+            os.path.getsize(SUSPECTS_FILE) > 0:
+        with open(SUSPECTS_FILE, 'r') as f:
+            data = f.read()
+            try:
+                data_json = json.loads(data)
+            except Exception as e:
+                print(e)
+                return
+    for s in data_json:
+        if s['xuid'] == player.xuid.decode():
+            warn('Suspect already in suspects file, skipping.')
+            return
+    data_json.append(suspect)
+    with open(SUSPECTS_FILE, 'w') as f:
+        f.write(json.dumps(data_json))
+    info('Written suspect to ' + SUSPECTS_FILE) 
+    
+
+def check_vac_status(xuid):
+    steam_url = 'https://steamcommunity.com/profiles/' + xuid
+    r = requests.get(steam_url)
+    if RE_PROFILE_BAN.findall(r.content):
+        return True
+    else:
+        return False
+        
+        
+def check_local_suspects():
+    if os.path.isfile(SUSPECTS_FILE) and \
+            os.path.getsize(SUSPECTS_FILE) > 0:
+        with open(SUSPECTS_FILE, 'r') as f:
+            data = f.read()
+            try:
+                suspects = json.loads(data)
+            except Exception as e:
+                error(e)
+    else:
+        error('Cannot read suspects from ' + SUSPECTS_FILE)
+    update_counter = 0
+    for suspect in suspects:
+        if suspect['banned']:
+            continue
+        banned = check_vac_status(suspect['xuid'])
+        if banned:
+            info('https://steamcommunity.com/profiles/{} is now banned! =D'.format(suspect['xuid']))
+            suspect['banned'] = True
+            suspect['last_checked'] = int(time.time())
+            update_counter += 1
+    with open(SUSPECTS_FILE, 'w') as f:
+        f.write(json.dumps(suspects))
+    info('Updated {} suspects'.format(update_counter))
         
         
 class Player(object):
@@ -157,9 +258,12 @@ class DemoInfo(object):
         self.t_rounds_won = 0
         self.warmup_over = False
         self.team = None
+        self.handle_suspect_callback = None
         
-    def dump_demo(self):
+    def dump_demo(self, callback=None):
         info('Start dumping demo...')
+        if callback:
+            self.handle_suspect_callback = callback
         # -stringtables is required to get 'player info'/player_info
         cmd_args = [DEMOINFOGO, '-gameevents', '-nofootsteps',
                     '-stringtables', '-nowarmup', self.demofile]
@@ -186,6 +290,9 @@ class DemoInfo(object):
                 continue
             print(player.pretty_print())
             print('---')
+        if self.handle_suspect_callback and \
+                callable(self.handle_suspect_callback):
+            self.handle_suspect_callback(self.players, self.demofile)
 
     def parse_message_data(self, data):
         return_dict = {}
@@ -256,7 +363,7 @@ class DemoInfo(object):
                 if self.parse_id_from_userid(message_data[b'userid']) in self.players.keys():
                     self.players[self.parse_id_from_userid(message_data[b'userid'])].deaths += 1
                     self.players[self.parse_id_from_userid(message_data[b'userid'])].is_alive = False
-                    if self.parse_id_from_userid(message_data[b'userid']) != self.parse_id_from_userid(message_data[b'attacker']):
+                    if self.parse_id_from_userid(message_data[b'userid']) != self.parse_id_from_userid(message_data[b'attacker']) and self.parse_id_from_userid(message_data[b'attacker']) in self.players.keys():
                         # Kill was not a suicide
                         if self.players[self.parse_id_from_userid(message_data[b'attacker'])].is_alive == True:
                             self.players[self.parse_id_from_userid(message_data[b'attacker'])].kills += 1
@@ -344,7 +451,7 @@ class DemoInfo(object):
  
 def analyze_demo(filename):   
     demoinfo = DemoInfo(filename)
-    demoinfo.dump_demo()
+    demoinfo.dump_demo(callback=handle_suspect)
     
 if __name__ == '__main__':
     demo_file = None
@@ -353,6 +460,9 @@ if __name__ == '__main__':
     if not demo_file:
         info('Sniffing for demo downloads...')
         sniff(filter='tcp port 80',prn=find_demo)
+    elif os.path.basename(demo_file) == SUSPECTS_FILE:
+        info('Checking suspects file')
+        check_local_suspects()
     else:
         analyze_demo(demo_file)
         
