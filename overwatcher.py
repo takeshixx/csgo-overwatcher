@@ -97,10 +97,12 @@ def handle_suspect(players, demofile):
             break
         except ValueError:
             warn('Invalid player choice: ' + str(choice))
-    if not choice and choice != 0:
+    if choice and choice != 0:
+        write_suspects_file(players[choice - 1], demofile)
+    elif choice and choice == 0:
+        info('Suspect innocent')
+    else:
         warn('Failed to provide a valid suspect id!')
-        return
-    write_suspects_file(players[choice - 1], demofile)
 
 
 def write_suspects_file(player, demofile):
