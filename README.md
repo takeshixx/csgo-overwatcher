@@ -4,6 +4,10 @@ This tool is a quick hack that allows to investigate the actual suspects of CSGO
 
 ![screenshot](screenshot.png)
 
+Overview of all Steam profiles after demo is finished:
+
+![screenshot](screenshot-verdict.png)
+
 *Note*: This tool does not interfere with CSGO in any way. So it should not get you banned. The demo files can be downloaded by everyone that has access to the URL. If you have further questions, you should probably not use this tool.
 
 ## Dependencies
