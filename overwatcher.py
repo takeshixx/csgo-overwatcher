@@ -19,6 +19,7 @@ TEAM_T = 2
 TEAM_CT = 3
 DEMOINFOGO = 'demoinfogo.exe'
 SUSPECTS_FILE = 'suspects.json'
+USER_AGENT = 'Valve/Steam HTTP Client 1.0 (730)'
 
 
 def info(msg):
@@ -42,7 +43,8 @@ def download_demo(url, filename):
         warn('Demo already loaded, skipping')
         return
     info('Downloading demo...')
-    req = requests.get(url)
+    headers = {'User-Agent': USER_AGENT}
+    req = requests.get(url, headers=headers)
     with open(filename, 'wb') as f:
         f.write(req.content)
     info('Written demo as {}'.format(filename))
