@@ -46,6 +46,6 @@ python3.exe overwatcher.py 123123_123123123123123123132.dem
 
 ## Disclamier
 
-The author takes no responsibility for anything this tool will be used for. It has been built for eductaional purposes. Credtis go to the authors of the tools that have been used to create this project.
+The author takes no responsibility for anything this tool will be used for. It has been built for educational purposes. Credits go to the authors of the tools that have been used to create this project.
 
 This code has been written for fun and it will most likely contain bugs.
