@@ -101,7 +101,7 @@ def handle_suspect(players, demofile):
             warn('Invalid player choice: ' + str(choice))
     if choice and choice != 0:
         write_suspects_file(players[choice - 1], demofile)
-    elif choice and choice == 0:
+    elif choice == 0:
         info('Suspect innocent')
     else:
         warn('Failed to provide a valid suspect id!')
