@@ -9,6 +9,14 @@ import json
 import time
 from scapy.all import *
 
+try:
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+    SELENIUM = True
+except ImportError:
+    print('Install selenium for screenshot support.')
+    SELENIUM = False
+
 RE_URL = re.compile(r'GET (/730/\d+_\d+.dem.bz2)')
 RE_HOST = re.compile(r'Host: (replay\d+.valve.net)')
 RE_FILENAME = re.compile(r'GET /730/(\d+_\d+.dem.bz2)')
@@ -20,6 +28,7 @@ TEAM_CT = 3
 DEMOINFOGO = 'demoinfogo.exe'
 SUSPECTS_FILE = 'suspects.json'
 USER_AGENT = 'Valve/Steam HTTP Client 1.0 (730)'
+SCREENSHOT_DIR = 'screenshots'
 
 
 def info(msg):
@@ -143,6 +152,7 @@ def check_vac_status(xuid):
     steam_url = 'https://steamcommunity.com/profiles/' + xuid
     r = requests.get(steam_url)
     if RE_PROFILE_BAN.findall(r.content):
+        take_profile_screenshot(xuid)
         return True
     else:
         return False
@@ -161,7 +171,7 @@ def check_local_suspects():
         error('Cannot read suspects from ' + SUSPECTS_FILE)
     update_counter = 0
     for suspect in suspects:
-        if suspect['banned']:
+        if suspect.get('banned'):
             continue
         banned = check_vac_status(suspect['xuid'])
         if banned:
@@ -172,7 +182,30 @@ def check_local_suspects():
     with open(SUSPECTS_FILE, 'w') as f:
         f.write(json.dumps(suspects))
     info('Updated {} suspects'.format(update_counter))
-        
+
+
+def take_profile_screenshot(xuid):
+    if not SELENIUM:
+        warn('selenium not installed, cannot take screenshots.')
+        return
+    if not os.path.isdir(SCREENSHOT_DIR):
+        warn('Screenshot directory does not exist, creating it.')
+        os.makedirs(SCREENSHOT_DIR)
+    screenshot = SCREENSHOT_DIR + '/' + xuid + '.png'
+    steam_url = 'https://steamcommunity.com/profiles/' + xuid
+    options = Options()  
+    options.add_argument('--headless')  
+    options.add_argument('--window-size=1920,1080')
+    options.add_argument('--log-level=3')
+    driver = webdriver.Chrome('chromedriver', chrome_options=options)
+    driver.get(steam_url)
+    info('Saving profile screenshot to ' + screenshot)
+    element = driver.find_element_by_tag_name('body')
+    element_png = element.screenshot_as_png
+    with open(screenshot, 'wb') as f:
+        f.write(element_png)
+    driver.quit()
+
         
 class Player(object):
     def __init__(self, xuid, name, userid, steamid=None):
