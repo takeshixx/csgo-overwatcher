@@ -101,3 +101,8 @@ ENV/
 .mypy_cache/
 
 suspects.json
+chromedriver.exe
+*.dem
+*.bz2
+*.png
+.vscode
