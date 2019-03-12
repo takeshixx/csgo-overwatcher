@@ -1,6 +1,6 @@
-# CSGO Overwatcher
+# CS:GO Overwatcher
 
-This tool is a quick hack that allows to investigate the actual suspects of CSGO Overwatch cases. In the default mode it runs in the background and waits until an Overwatch case will be downloaded. As soon as one clicks the download button, this tool will download and unpack the demo file. After that, it will analyze the demo and prints out the scoreboard of each round as well as a list of all players with their Steam community profile URLs (and some additional info) at the end.
+This tool is a quick hack that allows to investigate the actual suspects of CS:GO Overwatch cases. In the default mode it runs in the background and waits until an Overwatch case will be downloaded. As soon as one clicks the download button, this tool will download and unpack the demo file. After that, it will analyze the demo and prints out the scoreboard of each round as well as a list of all players with their Steam community profile URLs (and some additional info) at the end.
 
 ![screenshot](screenshot.png)
 
@@ -8,7 +8,7 @@ Overview of all Steam profiles after demo is finished:
 
 ![screenshot](screenshot-verdict.png)
 
-*Note*: This tool does not interfere with CSGO in any way. So it should not get you banned. The demo files can be downloaded by everyone that has access to the URL. If you have further questions, you should probably not use this tool.
+*Note*: This tool does not interfere with CS:GO in any way. So it should not get you banned. The demo files can be downloaded by everyone that has access to the URL. If you have further questions, you should probably not use this tool.
 
 ## Dependencies
 
