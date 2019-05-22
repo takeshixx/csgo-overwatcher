@@ -18,7 +18,7 @@ except ImportError:
     SELENIUM = False
 
 RE_URL = re.compile(r'GET (/730/\d+_\d+.dem.bz2)')
-RE_HOST = re.compile(r'Host: (replay\d+.valve.net)')
+RE_HOST = re.compile(r'Host: (replay\d+.valve.net|replay\d+.wmsj.cn)')
 RE_FILENAME = re.compile(r'GET /730/(\d+_\d+.dem.bz2)')
 RE_STEAMID = re.compile(r'STEAM_\d:\d:\d+')
 RE_DEMO_MSG = re.compile(rb'(?:^|(?:\r)?\n)(\w+|(?:\w+\s+\w+))(?:\r)?\n{(?:\r)?\n (.*?)?(?:\r)?\n}', re.S | re.M)
