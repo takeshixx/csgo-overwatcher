@@ -44,6 +44,14 @@ The demo files will reside on the file system for later inspection. Already down
 python3.exe overwatcher.py 123123_123123123123123123132.dem
 ```
 
+In case you want to analyse a case that you already started, you can follow these steps:
+
+* Close CS:GO (do not sent your verdict)
+* Go to your `csgo` folder (on windows it will be something like `C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\csgo`)
+* Delete the file `myassignedcase.evidence`
+* Run `overwatcher.py`
+* Start CS:GO and download the Overwatch case again
+
 ## Disclamier
 
 The author takes no responsibility for anything this tool will be used for. It has been built for educational purposes. Credits go to the authors of the tools that have been used to create this project.
