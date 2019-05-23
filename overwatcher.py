@@ -13,8 +13,8 @@ try:
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
     SELENIUM = True
-except ImportError:
-    print('Install selenium for screenshot support.')
+except ImportError as e:
+    print('Install selenium for screenshot support: ' + str(e))
     SELENIUM = False
 
 RE_URL = re.compile(r'GET (/730/\d+_\d+.dem.bz2)')
