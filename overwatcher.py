@@ -18,7 +18,8 @@ except ImportError as e:
     SELENIUM = False
 
 RE_URL = re.compile(r'GET (/730/\d+_\d+.dem.bz2)')
-RE_HOST = re.compile(r'Host: (replay\d+.valve.net|replay\d+.wmsj.cn)')
+RE_HOST = re.compile(r'Host: (replay\d+.valve.net)')
+RE_HOST_PW = re.compile(r'Host: (replay\d+.wmsj.cn)')
 RE_FILENAME = re.compile(r'GET /730/(\d+_\d+.dem.bz2)')
 RE_STEAMID = re.compile(r'STEAM_\d:\d:\d+')
 RE_DEMO_MSG = re.compile(rb'(?:^|(?:\r)?\n)(\w+|(?:\w+\s+\w+))(?:\r)?\n{(?:\r)?\n (.*?)?(?:\r)?\n}', re.S | re.M)
@@ -75,11 +76,16 @@ def find_demo(pkt):
     p = str(pkt)
     url_matches = RE_URL.findall(p)
     host_matches = RE_HOST.findall(p)
-    if url_matches and host_matches:
+    host_matches_pw = RE_HOST_PW.findall(p)
+    if url_matches and any([host_matches, host_matches_pw]):
         url = 'http://{host}{url}'.format(
             host=host_matches[0],
             url=url_matches[0])
-        info('Found new demo: {}'.format(url))
+        msg = 'Found new '
+        if host_matches_pw:
+            msg += 'Perfect World '
+        msg += 'demo: ' + url
+        info(msg)
         filename = RE_FILENAME.findall(p)[0]
         download_demo(url, filename)
         
