@@ -214,7 +214,11 @@ def take_profile_screenshot(xuid, anonymize=False):
     options.add_argument('--headless')  
     options.add_argument('--window-size=1920,1080')
     options.add_argument('--log-level=3')
-    driver = webdriver.Chrome('chromedriver', chrome_options=options)
+    try:
+        driver = webdriver.Chrome('chromedriver', chrome_options=options)
+    except Exception as e:
+        warn('Failed to load Chromedriver: ' + str(e))
+        return
     driver.get(steam_url)
     info('Saving profile screenshot to ' + screenshot)
     element = driver.find_element_by_tag_name('body')
