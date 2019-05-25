@@ -208,7 +208,6 @@ def take_profile_screenshot(xuid, anonymize=False):
     if not os.path.isdir(SCREENSHOT_DIR):
         warn('Screenshot directory does not exist, creating it.')
         os.makedirs(SCREENSHOT_DIR)
-    screenshot = SCREENSHOT_DIR + '/' + xuid + '.png'
     steam_url = 'https://steamcommunity.com/profiles/' + xuid
     options = Options()  
     options.add_argument('--headless')  
@@ -220,6 +219,18 @@ def take_profile_screenshot(xuid, anonymize=False):
         warn('Failed to load Chromedriver: ' + str(e))
         return
     driver.get(steam_url)
+    screenshot = SCREENSHOT_DIR + '/' + xuid
+    if anonymize:
+        info('Anonymizing profile')
+        # Script source: https://pastebin.com/raw/pCTGVrsU
+        hide_script = '''(function() {
+        jQuery(".playerAvatarAutoSizeInner, .profile_small_header_name, .myworkshop_playerName, .workshop_showcase_mutiitem_ctn a > img, .profile_header_centered_persona, .profile_group_links > .profile_count_link_preview, .profile_topfriends, .favoritegroup_showcase_group, .playerAvatar, .commentthread_author_link, #es_permalink").css("filter", "blur(9px) grayscale(0.75)");
+        jQuery("#global_header").hide()
+    })();'''
+        driver.execute_script(hide_script)
+        screenshot += '_anonymized.png'
+    else:
+        screenshot += '.png'
     info('Saving profile screenshot to ' + screenshot)
     element = driver.find_element_by_tag_name('body')
     element_png = element.screenshot_as_png
