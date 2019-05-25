@@ -7,15 +7,7 @@ import requests
 import subprocess
 import json
 import time
-from scapy.all import *
-
-try:
-    from selenium import webdriver
-    from selenium.webdriver.chrome.options import Options
-    SELENIUM = True
-except ImportError as e:
-    print('Install selenium for screenshot support: ' + str(e))
-    SELENIUM = False
+import argparse
 
 RE_URL = re.compile(r'GET (/730/\d+_\d+.dem.bz2)')
 RE_HOST = re.compile(r'Host: (replay\d+.valve.net)')
@@ -190,10 +182,14 @@ def check_local_suspects():
     info('Updated {} suspects'.format(update_counter))
 
 
-def take_profile_screenshot(xuid):
-    if not SELENIUM:
-        warn('selenium not installed, cannot take screenshots.')
-        return
+def take_profile_screenshot(xuid, anonymize=False):
+    if not selenium:
+        try:
+            from selenium import webdriver
+            from selenium.webdriver.chrome.options import Options
+        except ImportError as e:
+            warn('Install selenium for screenshot support: ' + str(e))
+            return
     if not os.path.isdir(SCREENSHOT_DIR):
         warn('Screenshot directory does not exist, creating it.')
         os.makedirs(SCREENSHOT_DIR)
@@ -497,15 +493,24 @@ def analyze_demo(filename):
     demoinfo.dump_demo(callback=handle_suspect)
     
 if __name__ == '__main__':
-    demo_file = None
-    if len(sys.argv) > 1:
-        demo_file = sys.argv[1]
-    if not demo_file:
-        info('Sniffing for demo downloads...')
-        sniff(filter='tcp port 80',prn=find_demo)
-    elif os.path.basename(demo_file) == SUSPECTS_FILE:
+    args = ARGS.parse_args()
+    if args.suspects:
         info('Checking suspects file')
         check_local_suspects()
+    elif args.demo:
+        info('Analyzing demo file')
+        analyze_demo(args.demo)
+    elif args.vac:
+        info('Checking VAC status')
+        if check_vac_status(args.vac):
+            info('Account BANNED')
+        else:
+            info('Account not banned')
+    elif args.screenshot:
+        info('Taking profile screenshot')
+        take_profile_screenshot(args.screenshot, args.anon)
     else:
-        analyze_demo(demo_file)
-        
+        # Only import Scapy when we need it
+        from scapy.all import *
+        info('Sniffing for demo downloads...')
+        sniff(filter='tcp port 80',prn=find_demo)
