@@ -52,6 +52,16 @@ In case you want to analyse a case that you already started, you can follow thes
 * Run `overwatcher.py`
 * Start CS:GO and download the Overwatch case again
 
+Take a screenshot of a Steam profile, where *99999999999999999* is the profile ID (XUID):
+
+```
+python3.exe overwatcher.py -s 99999999999999999
+```
+
+You can also add the `-a`/`--anonymize` option to blur sensitive information like the user name, fiends list, profile avatar and more.
+
+*Note*: Screenhots require the [Selenium](https://www.seleniumhq.org/projects/webdriver/) module and the [chromedriver.exe](http://chromedriver.chromium.org/) in the local directory.
+
 ## Disclamier
 
 The author takes no responsibility for anything this tool will be used for. It has been built for educational purposes. Credits go to the authors of the tools that have been used to create this project.
