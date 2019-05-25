@@ -22,6 +22,19 @@ DEMOINFOGO = 'demoinfogo.exe'
 SUSPECTS_FILE = 'suspects.json'
 USER_AGENT = 'Valve/Steam HTTP Client 1.0 (730)'
 SCREENSHOT_DIR = 'screenshots'
+selenium = None
+
+ARGS = argparse.ArgumentParser(description='Investigate the actual suspects of CS:GO Overwatch cases')
+ARGS.add_argument('demo', metavar='demo file', nargs='?',
+                  help='parse a local Overwatch demo file')
+ARGS.add_argument('-r', '--recheck', dest='suspects', default=None, metavar='suspects file',
+                  help='recheck the VAC status of suspects file')
+ARGS.add_argument('-c', '--check-vac', dest='vac', default=None, metavar='XUID',
+                  help='check ban status of account')
+ARGS.add_argument('-s', '--screenshot', dest='screenshot', default=None,
+                  metavar='XUID', help='take profile screenshot')
+ARGS.add_argument('-a', '--anonymize', action='store_true', dest='anon',
+                  default=False, help='anonymize profile screenshots')
 
 
 def info(msg):
@@ -118,6 +131,8 @@ def write_suspects_file(player, demofile):
     assert isinstance(player, Player), 'Invalid Player object: ' + str(type(player))
     info('Checking VAC status for ' + player.xuid.decode())
     banned = check_vac_status(player.xuid.decode())
+    if banned:
+        take_profile_screenshot(player.xuid.decode())
     info('VAC status: ' + 'BANNED' if banned else 'not banned (yet)')
     suspect = {'xuid': player.xuid.decode(),
                'name': player.name.decode(),
@@ -150,7 +165,6 @@ def check_vac_status(xuid):
     steam_url = 'https://steamcommunity.com/profiles/' + xuid
     r = requests.get(steam_url)
     if RE_PROFILE_BAN.findall(r.content):
-        take_profile_screenshot(xuid)
         return True
     else:
         return False
@@ -173,6 +187,7 @@ def check_local_suspects():
             continue
         banned = check_vac_status(suspect['xuid'])
         if banned:
+            take_profile_screenshot(suspect['xuid'])
             info('https://steamcommunity.com/profiles/{} is now banned! =D'.format(suspect['xuid']))
             suspect['banned'] = True
             suspect['last_checked'] = int(time.time())
