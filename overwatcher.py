@@ -83,12 +83,17 @@ def find_demo(pkt):
     host_matches = RE_HOST.findall(p)
     host_matches_pw = RE_HOST_PW.findall(p)
     if url_matches and any([host_matches, host_matches_pw]):
-        url = 'http://{host}{url}'.format(
-            host=host_matches[0],
-            url=url_matches[0])
         msg = 'Found new '
         if host_matches_pw:
             msg += 'Perfect World '
+            url = 'http://{host}{url}'.format(
+                host=host_matches_pw[0],
+                url=url_matches[0])
+        else:
+            url = 'http://{host}{url}'.format(
+                host=host_matches[0],
+                url=url_matches[0])
+
         msg += 'demo: ' + url
         info(msg)
         filename = RE_FILENAME.findall(p)[0]
