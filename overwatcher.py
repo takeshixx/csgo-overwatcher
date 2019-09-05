@@ -270,7 +270,7 @@ class Player(object):
                     '{assists} Deaths: {deaths} ({xuid})').format(
                 userid=self.userid.decode(),
                 name=self.name.decode(),
-                team=self.team.decode() or 'NOT_SET',
+                team=self.team or 'NOT_SET',
                 steam=self.get_steamcommunity_url(),
                 steamrep=self.get_steamrep_url(),
                 kills=self.kills,
@@ -342,9 +342,9 @@ class DemoInfo(object):
         cmd_args = [DEMOINFOGO, '-gameevents', '-nofootsteps',
                     '-stringtables', '-nowarmup', self.demofile]
         p = subprocess.Popen(cmd_args, stdout=subprocess.PIPE)
-        (output, error) = p.communicate()
-        p_status = p.wait()
-        if error:
+        (output, perr) = p.communicate()
+        p.wait()
+        if perr:
             error('Running {} failed: {}'.format(DEMOINFOGO, error if error else 'Unknown error'))
         self.parse_demo_dump(output)
         
@@ -359,7 +359,7 @@ class DemoInfo(object):
             message_data = self.parse_message_data(message_data)
             self.messages[message_type].append(message_data)
             self.handle_message(message_type, message_data)
-        for playerid, player in self.players.items():
+        for _, player in self.players.items():
             if player.is_bot():
                 continue
             print(player.pretty_print())
@@ -477,7 +477,7 @@ class DemoInfo(object):
         padding = max(len(p.name) for _, p in self.players.items()) + 2
         players_ct = []
         players_t = []
-        for playerid, player in self.players.items():
+        for _, player in self.players.items():
             if player.team == b'3' or player.team == 3:
                 players_ct.append(player)
             else:
@@ -546,6 +546,6 @@ if __name__ == '__main__':
         take_profile_screenshot(args.screenshot, args.anon)
     else:
         # Only import Scapy when we need it
-        from scapy.all import *
+        from scapy.all import sniff
         info('Sniffing for demo downloads...')
         sniff(filter='tcp port 80',prn=find_demo)
